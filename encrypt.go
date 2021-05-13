@@ -64,8 +64,7 @@ func (c *client) Encrypt(version, name string, value interface{}) (string, error
 	}
 
 	// convert to adyen format JSON
-	fmt.Println(time.Now().Format(time.RFC3339Nano))
-	plainText := fmt.Sprintf("{\"%s\":%s,\"generationtime\":\"%s\"}", name, string(encoded), time.Now().Format(time.RFC3339Nano))
+	plainText := fmt.Sprintf("{\"%s\":%s,\"generationtime\":\"%s\"}", name, string(encoded), time.Now().Format("2006-01-02T15:04:05.000Z07:00"))
 
 	// Encrypt the plain text content.
 
