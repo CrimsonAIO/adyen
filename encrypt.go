@@ -36,13 +36,13 @@ import (
 )
 
 const (
-	// Version1_18 is the text representation of Adyen v1.18.
-	Version1_18 = "0_1_18"
+	// Version118 is the text representation of Adyen v1.18.
+	Version118 = "0_1_18"
 )
 
 // Encrypt encrypts the specified value and returns it in the correct format.
 //
-// The version should be a valid Adyen version, such as Version1_18.
+// The version should be a valid Adyen version, such as Version118.
 //
 // The name should be the JSON field name. For encrypting a card number,
 // this should be "number". The plain text result, if the value was "0", would be:

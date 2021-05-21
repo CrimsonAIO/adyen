@@ -39,7 +39,7 @@ func TestEncryption(t *testing.T) {
 	}
 
 	// encrypt
-	encrypted, err := c.Encrypt(Version1_18, "number", "5246510090348187")
+	encrypted, err := c.Encrypt(Version118, "number", "5246510090348187")
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +59,7 @@ func BenchmarkEncryption(b *testing.B) {
 	// start benchmark.
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		if _, err = c.Encrypt(Version1_18, "number", "5246510090348187"); err != nil {
+		if _, err = c.Encrypt(Version118, "number", "5246510090348187"); err != nil {
 			panic(err)
 		}
 	}
