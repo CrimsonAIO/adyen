@@ -22,12 +22,12 @@ func main() {
     // card number to encrypt
     cardNumber := "000"
     
-    cardNumber, err := client.Encrypt(adyen.Version1_18, "number", cardNumber)
+    encrypted, err := client.Encrypt(adyen.Version1_18, "number", cardNumber)
     if err != nil {
     	panic(err)
     }
     
     // print encrypted card number
-    fmt.Println(cardNumber)
+    fmt.Println(encrypted)
 }
 ```
