@@ -87,8 +87,3 @@ fabric.properties
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-
-# Other files
-.idea/adyen.iml
-.idea/modules.xml
-.idea/vcs.xml
