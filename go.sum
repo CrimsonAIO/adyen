@@ -1,2 +1,6 @@
 github.com/CrimsonAIO/aesccm v0.0.0-20210508093536-68aa8a4fd324 h1:YzkPgpl/QjN5rVWhWMY+sYHXJ9AfKFi1cXDi3FGNXHA=
 github.com/CrimsonAIO/aesccm v0.0.0-20210508093536-68aa8a4fd324/go.mod h1:iA2zBnMU2gycaKpnsyU1H9Wt/LGvEgP84um6tBljBFI=
+github.com/CrimsonAIO/aesccm v0.0.0-20210610060303-b9f52dfd9cd8 h1:c2iUoiE59ygVSI1mCwDMmqcgwq5b6R2WQim7X9ZQ2hs=
+github.com/CrimsonAIO/aesccm v0.0.0-20210610060303-b9f52dfd9cd8/go.mod h1:aEB1tC7EK2THnciZ/b3GokuJ98ACvSNUtfFmaTJp3pU=
+github.com/CrimsonAIO/aesccm v1.0.0 h1:EPCBNTvnNMPvPVpIeUNEvhurP4675mCFilSSZBeV6vI=
+github.com/CrimsonAIO/aesccm v1.0.0/go.mod h1:aEB1tC7EK2THnciZ/b3GokuJ98ACvSNUtfFmaTJp3pU=
