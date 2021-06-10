@@ -17,17 +17,16 @@ func main() {
 	client, err := adyen.NewClient(os.Getenv("ADYEN_SITE_KEY"))
 	if err != nil {
 		panic(err)
-    }
-    
-    // card number to encrypt
-    cardNumber := "000"
-    
-    encrypted, err := client.Encrypt(adyen.Version118, "number", cardNumber)
-    if err != nil {
-    	panic(err)
-    }
-    
-    // print encrypted card number
-    fmt.Println(encrypted)
+	}
+	
+	// encrypt card number
+	encrypted, err := client.Encrypt(adyen.Version118, "number", "5555555555554444")
+	if err != nil {
+		panic(err)
+	}
+	
+	// print encrypted card number 
+	fmt.Println(encrypted)
 }
 ```
+Check it out on [The Go Playground](https://play.golang.org/p/6VqHCU6Fj50).
