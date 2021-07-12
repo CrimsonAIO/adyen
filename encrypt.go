@@ -39,8 +39,8 @@ const (
 	// Version118 is the text representation of Adyen v1.18.
 	Version118 = "0_1_18"
 
-	// Version0121 is the text representation of Adyen v1.21.
-	Version0121 = "0_1_21"
+	// Version121 is the text representation of Adyen v1.21.
+	Version121 = "0_1_21"
 )
 
 // Encrypt encrypts the specified value and returns it in the correct format.
