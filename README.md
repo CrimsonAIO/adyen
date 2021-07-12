@@ -24,7 +24,8 @@ func main() {
 	}
 	
 	// encrypt card number
-	encrypted, err := client.Encrypt(adyen.Version118, "number", "5555555555554444")
+	// if you need to encrypt multiple values into one string (for example, a map) you can use Encrypt.
+	encrypted, err := client.EncryptSingle(adyen.Version118, "number", "5555555555554444", adyen.GenerationTimeNow)
 	if err != nil {
 		panic(err)
 	}
@@ -33,7 +34,7 @@ func main() {
 	fmt.Println(encrypted)
 }
 ```
-Check it out on [The Go Playground](https://play.golang.org/p/6VqHCU6Fj50).
+Check it out on [The Go Playground](https://play.golang.org/p/hSyUO7vgJJj).
 
 ## Contributing
 Pull requests are welcome to add new version constants or other improvements.

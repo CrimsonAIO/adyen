@@ -43,33 +43,39 @@ const (
 	Version121 = "0_1_21"
 )
 
+// GenerationTimeFunc is a function responsible for returning the correct "generationtime" key
+// given a version and value.
+type GenerationTimeFunc func(version string, value map[string]interface{}) time.Time
+
+// GenerationTimeNow returns time.Now as the generated time.
+var GenerationTimeNow GenerationTimeFunc = func(version string, value map[string]interface{}) time.Time {
+	return time.Now()
+}
+
 // Encrypt encrypts the specified value and returns it in the correct format.
 //
-// The version should be a valid Adyen version, such as Version118.
-//
-// The name should be the JSON field name. For encrypting a card number,
-// this should be "number". The plain text result, if the value was "0", would be:
-// 		{
+// This function is similar to EncryptSingle, except the value type is a map.
+// This allows encryption of multiple values.
+// For example, you might have the following map:
+//		{
 //			"number": "0",
-//			"generatedtime": [generated time]
+// 			"expiryMonth": 1
 //		}
 //
-// The value is the actual content, for example, a card number.
-// The value will be correctly encoded to JSON, regardless of its type.
-// For example, if the type is a map, it would be formatted as a JSON map.
-// The type is typically a string.
-func (c *client) Encrypt(version, name string, value interface{}) (string, error) {
-	// Create the JSON result from a custom field name and value.
-	// encode the value to JSON
+// This map will be encrypted as one string, with the "generationtime" key being inserted
+// into the map before encryption.
+//
+// The getGenerationTime function is used to obtain the aforementioned "generationtime" key.
+// In most cases, GenerationTimeNow will suffice.
+// Some websites require different generation times.
+func (c *client) Encrypt(version string, value map[string]interface{}, getGenerationTime GenerationTimeFunc) (string, error) {
+	// insert generated time
+	value["generationtime"] = getGenerationTime(version, value).Format("2006-01-02T15:04:05.000Z07:00")
+
 	encoded, err := json.Marshal(value)
 	if err != nil {
 		return "", err
 	}
-
-	// convert to adyen format JSON
-	plainText := fmt.Sprintf("{\"%s\":%s,\"generationtime\":\"%s\"}", name, string(encoded), time.Now().Format("2006-01-02T15:04:05.000Z07:00"))
-
-	// Encrypt the plain text content.
 
 	// create new AES cipher block
 	block, err := aes.NewCipher(c.AESKey)
@@ -84,7 +90,7 @@ func (c *client) Encrypt(version, name string, value interface{}) (string, error
 	}
 
 	// encrypt content
-	cipherText := ccm.Seal(nil, c.AESNonce, []byte(plainText), nil)
+	cipherText := ccm.Seal(nil, c.AESNonce, encoded, nil)
 	// nonce with cipher text
 	nonceWithCipherText := append(c.AESNonce, cipherText...)
 
@@ -99,4 +105,11 @@ func (c *client) Encrypt(version, name string, value interface{}) (string, error
 		base64.StdEncoding.EncodeToString(encryptedKey),
 		base64.StdEncoding.EncodeToString(nonceWithCipherText),
 	), nil
+}
+
+// EncryptSingle is like Encrypt, but is easier to use when only one value is being encrypted.
+func (c *client) EncryptSingle(version, name string, value interface{}, getGenerationTime GenerationTimeFunc) (string, error) {
+	return c.Encrypt(version, map[string]interface{}{
+		name: value,
+	}, getGenerationTime)
 }
