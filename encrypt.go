@@ -31,8 +31,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/CrimsonAIO/aesccm"
 	"time"
+
+	"github.com/CrimsonAIO/aesccm"
 )
 
 const (
@@ -41,6 +42,9 @@ const (
 
 	// Version121 is the text representation of Adyen v1.21.
 	Version121 = "0_1_21"
+
+	// Version121 is the text representation of Adyen v1.25.
+	Version125 = "0_1_25"
 )
 
 // GenerationTimeFunc is a function responsible for returning the correct "generationtime" key

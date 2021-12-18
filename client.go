@@ -48,14 +48,15 @@ func NewClient(siteKey string) (*client, error) {
 	result := new(client)
 
 	// decode site key from hex
-	if decoded, err := hex.DecodeString(siteKey); err != nil {
+	decoded, err := hex.DecodeString(siteKey)
+	if err != nil {
 		return nil, err
-	} else {
-		// decode key from adyen format
-		result.SiteKey = new(rsa.PublicKey)
-		result.SiteKey.N = new(big.Int).SetBytes(decoded)
-		result.SiteKey.E = 65537
 	}
+
+	// decode key from adyen format
+	result.SiteKey = new(rsa.PublicKey)
+	result.SiteKey.N = new(big.Int).SetBytes(decoded)
+	result.SiteKey.E = 65537
 
 	// generate random key
 	result.AESKey = make([]byte, 32)
