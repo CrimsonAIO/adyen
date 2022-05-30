@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (C) 2021 Crimson Technologies LLC. All rights reserved.
+ * Copyright (C) 2022 Crimson Technologies, LLC. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,91 +25,96 @@
 package adyen
 
 import (
-	"crypto/aes"
-	crand "crypto/rand"
+	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/CrimsonAIO/aesccm"
-	"time"
 )
 
 const (
-	// Version118 is the text representation of Adyen v1.18.
-	Version118 = "0_1_18"
+	// GenerationTimeKey is the JSON key for the generated time.
+	GenerationTimeKey = "generationtime"
 
-	// Version121 is the text representation of Adyen v1.21.
-	Version121 = "0_1_21"
+	// GenerationTimeFormat is the time format.
+	// This is identical to time.RFC3339Nano except there is only three trailing zeros.
+	GenerationTimeFormat = "2006-01-02T15:04:05.000Z07:00"
+
+	// KeyNumber is the card number field key.
+	KeyNumber = "number"
+
+	// KeyExpiryMonth is the expiry month field key.
+	KeyExpiryMonth = "expiryMonth"
+
+	// KeyExpiryYear is the expiry year field key.
+	KeyExpiryYear = "expiryYear"
+
+	// KeySecurityCode is the security code field key.
+	KeySecurityCode = "cvc"
 )
 
-// GenerationTimeFunc is a function responsible for returning the correct "generationtime" key
-// given a version and value.
-type GenerationTimeFunc func(version string, value map[string]interface{}) time.Time
-
-// GenerationTimeNow returns time.Now as the generated time.
-var GenerationTimeNow GenerationTimeFunc = func(version string, value map[string]interface{}) time.Time {
-	return time.Now()
+// Encrypt encrypts a card number, security code (CVV/CVC), expiry month and year
+// into a map and correctly formats all values using FormatCardNumber and FormatMonthYear.
+func (enc *Encrypter) Encrypt(number, securityCode string, month, year int) (string, error) {
+	m, y := FormatMonthYear(month, year)
+	return enc.EncryptFields(map[string]string{
+		KeyNumber:       FormatCardNumber(number),
+		KeyExpiryMonth:  m,
+		KeyExpiryYear:   y,
+		KeySecurityCode: securityCode,
+	})
 }
 
-// Encrypt encrypts the specified value and returns it in the correct format.
+// EncryptField encrypts a single key and value.
+func (enc *Encrypter) EncryptField(key, value string) (string, error) {
+	return enc.EncryptFields(map[string]string{key: value})
+}
+
+// EncryptFields encrypts a map.
+func (enc *Encrypter) EncryptFields(fields map[string]string) (string, error) {
+	if _, ok := fields[GenerationTimeKey]; !ok {
+		fields[GenerationTimeKey] = enc.GetGenerationTime().Format(GenerationTimeFormat)
+	}
+
+	encoded, err := json.Marshal(fields)
+	if err != nil {
+		return "", err
+	}
+	return enc.EncryptPlaintext(encoded)
+}
+
+// EncryptPlaintext seals the given plaintext and returns the sealed content in the Adyen format.
 //
-// This function is similar to EncryptSingle, except the value type is a map.
-// This allows encryption of multiple values.
-// For example, you might have the following map:
-//		{
-//			"number": "0",
-// 			"expiryMonth": 1
-//		}
-//
-// This map will be encrypted as one string, with the "generationtime" key being inserted
-// into the map before encryption.
-//
-// The getGenerationTime function is used to obtain the aforementioned "generationtime" key.
-// In most cases, GenerationTimeNow will suffice.
-// Some websites require different generation times.
-func (c *client) Encrypt(version string, value map[string]interface{}, getGenerationTime GenerationTimeFunc) (string, error) {
-	// insert generated time
-	value["generationtime"] = getGenerationTime(version, value).Format("2006-01-02T15:04:05.000Z07:00")
+// Most callers should use Encrypt, EncryptField or EncryptFields instead.
+func (enc *Encrypter) EncryptPlaintext(plaintext []byte) (string, error) {
+	// generate random nonce
+	nonce := make([]byte, 12)
+	if _, err := rand.Read(nonce); err != nil {
+		return "", err
+	}
 
-	encoded, err := json.Marshal(value)
+	// create ccm cipher
+	ccm, err := aesccm.NewCCM(enc.block, len(nonce), 8)
 	if err != nil {
 		return "", err
 	}
 
-	// create new AES cipher block
-	block, err := aes.NewCipher(c.AESKey)
+	// create ciphertext
+	ciphertext := ccm.Seal(nil, nonce, plaintext, nil)
+	// nonce with ciphertext
+	nonceWithCiphertext := append(nonce, ciphertext...)
+
+	// encrypted key using public key
+	sealedKey, err := rsa.EncryptPKCS1v15(rand.Reader, enc.pubKey, enc.key[:])
 	if err != nil {
 		return "", err
 	}
 
-	// create new CCM mode cipher
-	ccm, err := aesccm.NewCCM(block, len(c.AESNonce), 8)
-	if err != nil {
-		return "", err
-	}
-
-	// encrypt content
-	cipherText := ccm.Seal(nil, c.AESNonce, encoded, nil)
-	// nonce with cipher text
-	nonceWithCipherText := append(c.AESNonce, cipherText...)
-
-	// encrypt the AES key using the site's RSA public key
-	encryptedKey, err := rsa.EncryptPKCS1v15(crand.Reader, c.SiteKey, c.AESKey)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("adyenjs_%s$%s$%s",
-		version,
-		base64.StdEncoding.EncodeToString(encryptedKey),
-		base64.StdEncoding.EncodeToString(nonceWithCipherText),
+	return fmt.Sprintf(
+		"adyenjs_%s$%s$%s",
+		enc.Version,
+		base64.StdEncoding.EncodeToString(sealedKey),
+		base64.StdEncoding.EncodeToString(nonceWithCiphertext),
 	), nil
-}
-
-// EncryptSingle is like Encrypt, but is easier to use when only one value is being encrypted.
-func (c *client) EncryptSingle(version, name string, value interface{}, getGenerationTime GenerationTimeFunc) (string, error) {
-	return c.Encrypt(version, map[string]interface{}{
-		name: value,
-	}, getGenerationTime)
 }

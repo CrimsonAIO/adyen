@@ -11,27 +11,45 @@ typically use `math/rand` which is **insecure** for generating secret keys and n
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/CrimsonAIO/adyen"
-	"os"
 )
 
 func main() {
-	// create new client with a specific site key.
-	client, err := adyen.NewClient(os.Getenv("ADYEN_SITE_KEY"))
+	// create a public key from the public key bytes
+	//
+	// if you have a key that looks like "10001|...", then you need to
+	// hex decode the part after "|".
+	// an example of this is shown here, minus removing the front part.
+	const plaintextKey = "..."
+	b, err := hex.DecodeString(plaintextKey)
 	if err != nil {
 		panic(err)
-	}
+    }
 	
-	// encrypt card number
-	// if you need to encrypt multiple values into one string (for example, a map) you can use Encrypt.
-	encrypted, err := client.EncryptSingle(adyen.Version118, "number", "5555555555554444", adyen.GenerationTimeNow)
+	// create new encrypter
+	enc, err := adyen.NewEncrypter("0_1_18", adyen.PubKeyFromBytes(b))
 	if err != nil {
 		panic(err)
-	}
-	
-	// print encrypted card number 
-	fmt.Println(encrypted)
+    }
+
+	// encrypt card information
+	//
+	// the number and month are automatically formatted with FormatCardNumber and
+	// FormatMonthYear, so formatting doesn't matter.
+	payload, err := enc.Encrypt(
+		"4871049999999910",
+		"737",
+		3,
+		2030,
+		)
+	if err != nil {
+		panic(err)
+    }
+
+	// print the payload to send to the server
+	fmt.Println(payload)
 }
 ```
 Check it out on [The Go Playground](https://play.golang.org/p/hSyUO7vgJJj).

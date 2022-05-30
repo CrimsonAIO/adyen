@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (C) 2021 Crimson Technologies LLC. All rights reserved.
+ * Copyright (C) 2022 Crimson Technologies, LLC. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,33 @@
 
 package adyen
 
-import "testing"
+import (
+	"crypto/rand"
+	"crypto/rsa"
+	"testing"
+)
 
-// BenchmarkClientCreationFromStaticKey benchmarks how long it takes to create
-// a new client from the same hex encoded public key.
-func BenchmarkClientCreationFromStaticKey(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		if _, err := NewClient(testPublicKey); err != nil {
-			panic(err)
-		}
+func TestEncrypter(t *testing.T) {
+	// generate random key
+	key, err := rsa.GenerateKey(rand.Reader, 1024)
+	if err != nil {
+		panic(err)
 	}
+
+	enc, err := NewEncrypter("v1", &key.PublicKey)
+	if err != nil {
+		panic(err)
+	}
+
+	payload, err := enc.Encrypt(
+		"4871 0499 9999 9910",
+		"737",
+		3,
+		2030,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	t.Log("Payload:", payload)
 }
