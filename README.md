@@ -26,13 +26,13 @@ func main() {
 	b, err := hex.DecodeString(plaintextKey)
 	if err != nil {
 		panic(err)
-    }
-	
+	}
+
 	// create new encrypter
 	enc, err := adyen.NewEncrypter("0_1_18", adyen.PubKeyFromBytes(b))
 	if err != nil {
 		panic(err)
-    }
+	}
 
 	// encrypt card information
 	//
@@ -43,10 +43,10 @@ func main() {
 		"737",
 		3,
 		2030,
-		)
+	)
 	if err != nil {
 		panic(err)
-    }
+	}
 
 	// print the payload to send to the server
 	fmt.Println(payload)
