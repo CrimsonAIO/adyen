@@ -52,7 +52,7 @@ func main() {
 	fmt.Println(payload)
 }
 ```
-Check it out on [The Go Playground](https://play.golang.org/p/hSyUO7vgJJj).
+Check it out on [The Go Playground](https://go.dev/play/p/9tL6ziE52aw).
 
 ## Contributing
 Pull requests are welcome to add new version constants or other improvements.
